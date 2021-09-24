@@ -8,18 +8,25 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using mvcblog.Data;
 using mvcblog.Models;
+using mvcblog.Controllers;
+using Microsoft.Extensions.Logging;
 
 namespace mvcblog.Areas.Admin.Blog.Controllers
 {
     [Area ("Admin")]
     [Authorize]
-    public class CategoryController : Controller {
+    public class CategoryController : ControllerTemplateMethod {
         private readonly AppDbContext _context;
+        private readonly ILogger<CategoryController> _logger;
 
-        public CategoryController (AppDbContext context) {
+        public CategoryController (AppDbContext context,
+            ILogger<CategoryController> logger) {
             _context = context;
+            _logger = logger;
 
             CategorySingleton.Instance.Init(context);
+
+            PrintInformation();
         }
 
         // GET: Admin/Category
@@ -104,8 +111,9 @@ namespace mvcblog.Areas.Admin.Blog.Controllers
                 _context.Add (category);
                 await _context.SaveChangesAsync ();
 
-                CategorySingleton.Instance.listCatgegory.Clear();
-                CategorySingleton.Instance.Init(_context);
+                //CategorySingleton.Instance.listCatgegory.Clear();
+                //CategorySingleton.Instance.Init(_context);
+                CategorySingleton.Instance.Update(_context);
 
                 return RedirectToAction (nameof (Index));
             }
@@ -203,6 +211,30 @@ namespace mvcblog.Areas.Admin.Blog.Controllers
 
         private bool CategoryExists (int id) {
             return _context.Categories.Any (e => e.Id == id);
+        }
+
+        protected override void PrintRoutes()
+        {
+            _logger.LogDebug($@"{GetType().Name}
+                Routes:
+                GET: Admin/Category
+                GET: Admin/Category/Details/:id
+                GET: Admin/Category/Create
+                POST: Admin/Category/Create
+                GET: Admin/Category/Edit/5
+                POST: Admin/Category/Edit/:id
+                GET: Admin/Category/Delete/:id
+                POST: Admin/Category/Delete/:id
+                ");
+        }
+
+        protected override void PrintDIs()
+        {
+            _logger.LogDebug($@"
+                Dependencies:
+                AppDbContext _context
+                ILogger<CategoryController> _logger
+                ");
         }
     }
 }

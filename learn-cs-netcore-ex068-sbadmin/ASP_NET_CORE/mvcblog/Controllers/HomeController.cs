@@ -10,13 +10,15 @@ using mvcblog.Models;
 
 namespace mvcblog.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : ControllerTemplateMethod
     {
         private readonly ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
+
+            PrintInformation();
         }
 
         public IActionResult Index()
@@ -34,6 +36,24 @@ namespace mvcblog.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        protected override void PrintRoutes()
+        {
+            _logger.LogInformation($@"{GetType().Name}
+                Routes:
+                GET: Index
+                GET: Privacy
+                GET: Error
+                ");
+        }
+
+        protected override void PrintDIs()
+        {
+            _logger.LogInformation($@"
+                Dependencies:
+                ILogger<CategoryController> _logger
+                ");
         }
     }
 }
