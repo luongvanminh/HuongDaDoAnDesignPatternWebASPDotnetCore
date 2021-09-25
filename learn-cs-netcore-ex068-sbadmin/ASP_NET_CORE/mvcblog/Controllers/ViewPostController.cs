@@ -10,15 +10,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using mvcblog.core;
+using mvcblog.Controllers.ViewPostControllerFacade;
 
 namespace mvcblog.Controllers {
     [Route ("/posts")]
     public class ViewPostController : Controller {
-        private readonly ILogger<ViewPostController> _logger;
 
-        private readonly AppDbContext _context;
-
-        private IMemoryCache _cache;
+        ViewPostFacade facade;
 
         // Số bài hiện thị viết trên một trang danh mục
         public const int ITEMS_PER_PAGE = 4;
@@ -26,11 +24,12 @@ namespace mvcblog.Controllers {
         public ViewPostController (ILogger<ViewPostController> logger,
             AppDbContext context,
             IMemoryCache cache) {
-            _logger = logger;
-            _context = context;
-            _cache = cache;
 
             CategorySingleton.Instance.Init(context);
+
+            facade = new ViewPostFacade(logger, context, cache);
+
+            facade.PrintRoutes();
         }
 
         /// Lấy danh các Categories - có dùng cache
@@ -42,18 +41,9 @@ namespace mvcblog.Controllers {
             string keycacheCategories = "_listallcategories";
 
             // Phục hồi categories từ Memory cache, không có thì truy vấn Db
-            if (!_cache.TryGetValue (keycacheCategories, out categories)) {
-
-                categories = _context.Categories
-                    .Include (c => c.CategoryChildren)
-                    .AsEnumerable ()
-                    .Where (c => c.ParentCategory == null)
-                    .ToList ();
-
-                // Thiết lập cache - lưu vào cache
-                var cacheEntryOptions = new MemoryCacheEntryOptions ()
-                    .SetSlidingExpiration (TimeSpan.FromMinutes (300));
-                _cache.Set ("_GetCategories", categories, cacheEntryOptions);
+            if (!facade.TryGetValue (keycacheCategories, out categories)) {
+                categories = facade.GetListCategoryParentIsNull();
+                facade.SetCache(keycacheCategories, categories);
             }
 
             return categories;
@@ -106,11 +96,7 @@ namespace mvcblog.Controllers {
 
 
             // Truy vấn lấy các post
-            var posts = _context.Posts
-                .Include (p => p.Author) // Load Author cho post  
-                .Include (p => p.PostCategories) // Load các Category của Post
-                .ThenInclude (c => c.Category)
-                .AsQueryable ();
+            var posts = facade.GetAllPosts();
 
             if (category != null) {
 
@@ -160,12 +146,7 @@ namespace mvcblog.Controllers {
             }
 
             // Truy vấn lấy bài viết theo Slug
-            var post = await _context.Posts
-                .Where (p => p.Slug == Slug)
-                .Include (p => p.Author)
-                .Include (p => p.PostCategories)
-                .ThenInclude (c => c.Category)
-                .FirstOrDefaultAsync ();
+            var post = await facade.GetPostBySlug(Slug);
 
             if (post == null) {
                 return NotFound ("Không thấy trang");
