@@ -10,6 +10,7 @@ using mvcblog.Data;
 using mvcblog.Models;
 using mvcblog.Controllers;
 using Microsoft.Extensions.Logging;
+using mvcblog.core;
 
 namespace mvcblog.Areas.Admin.Blog.Controllers
 {
@@ -84,15 +85,28 @@ namespace mvcblog.Areas.Admin.Blog.Controllers
             Action<List<Category>, int> _ChangeTitleCategory = null;
             Action<List<Category>, int> ChangeTitleCategory =  (items, level) => {
                 string prefix = String.Concat(Enumerable.Repeat("—", level));
-                foreach (var item in items) {
-                    item.Title = prefix + " " + item.Title; 
+                //foreach (var item in items) {
+                //    item.Title = prefix + " " + item.Title; 
+                //    resultitems.Add(item);
+                //    if ((item.CategoryChildren != null) && (item.CategoryChildren.Count > 0)) {
+                //        _ChangeTitleCategory(item.CategoryChildren.ToList(), level + 1);
+                //    }
+
+                //}
+
+                IIterator iterator = new CategoryIterator(items);
+                var item = iterator.First();
+                while(!iterator.IsDone)
+                {
+                    item.Title = prefix + " " + item.Title;
                     resultitems.Add(item);
-                    if ((item.CategoryChildren != null) && (item.CategoryChildren.Count > 0)) {
+                    if ((item.CategoryChildren != null) && (item.CategoryChildren.Count > 0))
+                    {
                         _ChangeTitleCategory(item.CategoryChildren.ToList(), level + 1);
                     }
-                        
+                    item = iterator.Next();
                 }
-                
+
             };
 
             _ChangeTitleCategory = ChangeTitleCategory;

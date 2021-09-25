@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using mvcblog.Models;
 using Microsoft.EntityFrameworkCore;
+using mvcblog.core;
 
 namespace mvcblog.Data
 {
@@ -25,10 +26,12 @@ namespace mvcblog.Data
                     .Where(c => c.ParentCategory == null)
                     .ToList();
 
-                foreach (var item in categories)
-                {
-                    listCatgegory.Add(item);
-                }
+                //foreach (var item in categories)
+                //{
+                //    listCatgegory.Add(item);
+                //}
+                IIterator iterator = new CategoryIterator(categories);
+                iterator.ForEachItem(listCatgegory.Add);
             }
         }
 

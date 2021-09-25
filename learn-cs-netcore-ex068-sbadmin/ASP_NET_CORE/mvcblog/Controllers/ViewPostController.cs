@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using mvcblog.core;
 
 namespace mvcblog.Controllers {
     [Route ("/posts")]
@@ -62,12 +63,24 @@ namespace mvcblog.Controllers {
         [NonAction]
         Category FindCategoryBySlug (List<Category> categories, string Slug) {
 
-            foreach (var c in categories) {
-                if (c.Slug == Slug) return c;
-                var c1 = FindCategoryBySlug (c.CategoryChildren.ToList (), Slug);
+            //foreach (var c in categories)
+            //{
+            //    if (c.Slug == Slug) return c;
+            //    var c1 = FindCategoryBySlug(c.CategoryChildren.ToList(), Slug);
+            //    if (c1 != null)
+            //        return c1;
+            //}
+            IIterator iterator = new CategoryIterator(categories);
+            var item = iterator.First();
+            while (!iterator.IsDone)
+            {
+                if (item.Slug == Slug) return item;
+                var c1 = FindCategoryBySlug(item.CategoryChildren.ToList(), Slug);
                 if (c1 != null)
                     return c1;
+                item = iterator.Next();
             }
+            
 
             return null;
         }
