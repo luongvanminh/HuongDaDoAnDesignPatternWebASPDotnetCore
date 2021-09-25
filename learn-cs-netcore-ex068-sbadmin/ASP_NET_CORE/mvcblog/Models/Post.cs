@@ -5,8 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace mvcblog.Models
 {
+    public interface PostPrototype
+    {
+        PostPrototype Clone();
+    }
+
     [Table("Post")]
-    public class Post : PostBase
+    public class Post : PostBase, PostPrototype
     {
 
         [Required]
@@ -21,5 +26,20 @@ namespace mvcblog.Models
 
         [Display(Name = "Ngày cập nhật")]
         public DateTime DateUpdated {set; get;}
+
+        public PostPrototype Clone()
+        {
+            // Khong clone Post ID
+            Post newPost = new Post();
+            newPost.Title = Title;
+            newPost.Description = Description;
+            newPost.Slug = Slug;
+            newPost.Content = Content;
+            newPost.Published = Published;
+            newPost.AuthorId = AuthorId;
+            newPost.DateCreated = DateCreated;
+            newPost.DateUpdated = DateUpdated;
+            return newPost;
+        }
     }
 }

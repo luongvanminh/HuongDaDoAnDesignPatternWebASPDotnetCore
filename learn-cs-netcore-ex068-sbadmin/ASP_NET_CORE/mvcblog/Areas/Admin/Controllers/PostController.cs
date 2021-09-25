@@ -295,6 +295,52 @@ namespace mvcblog.Areas.Admin.Controllers {
             return RedirectToAction (nameof (Index));
         }
 
+        // GET: Admin/Post/Duplicate/5
+        public async Task<IActionResult> Duplicate(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var post = await _context.Posts
+                .Include(p => p.Author)
+                .FirstOrDefaultAsync(m => m.PostId == id);
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            return View(post);
+        }
+
+        // POST: Admin/Post/Duplicate/5
+        [HttpPost, ActionName("Duplicate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DuplicateConfirmed(int id)
+        {
+            var post = await _context.Posts.FindAsync(id);
+
+            var postCategories =
+                await _context.PostCategories
+                        .Where(p => p.PostID == id)
+                        .ToListAsync();
+
+            var clonePost = post.Clone();
+
+            _context.Add(clonePost);
+            await _context.SaveChangesAsync();
+
+            // Chèn thông tin về PostCategory của bài Post
+            foreach (var postCategory in postCategories)
+            {
+                _context.Add(new PostCategory() { PostID = ((Post)clonePost).PostId, CategoryID = postCategory.CategoryID });
+            }
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
         private bool PostExists (int id) {
             return _context.Posts.Any (e => e.PostId == id);
         }
