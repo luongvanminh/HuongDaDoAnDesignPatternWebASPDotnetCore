@@ -102,11 +102,24 @@ namespace Album.Areas.Identity.Pages.Account.Manage {
             user.Address  = Input.Address;
             user.Birthday = Input.Birthday;
             user.FullName = Input.FullName;
-            await _userManager.UpdateAsync(user);
+            //await _userManager.UpdateAsync(user);
+
+            ProxyAppUser proxyAppUser = new ProxyAppUser(user);
+            var codeUpdate = await proxyAppUser.UpdateDatabase(_userManager);
+
 
             // Đăng nhập lại để làm mới Cookie (không nhớ thông tin cũ)
             await _signInManager.RefreshSignInAsync (user);
-            StatusMessage = "Hồ sơ của bạn đã cập nhật";
+            if (codeUpdate == CodeAppUser.InvalidFullName)
+            {
+                StatusMessage = "Tên không được phép";
+            } else if (codeUpdate == CodeAppUser.InvalidBirthday)
+            {
+                StatusMessage = "Người dùng phải trên 18 tuổi";
+            } else
+            {
+                StatusMessage = "Hồ sơ của bạn đã cập nhật";
+            }
             return RedirectToPage ();
         }
     }
